@@ -1,0 +1,19 @@
+{
+  "name": "collectify-backend",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cantasar/collectify-backend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/cantasar/collectify-backend/issues"
+  },
+  "homepage": "https://github.com/cantasar/collectify-backend#readme",
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
