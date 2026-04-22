@@ -1,6 +1,8 @@
 import express, { Application } from "express";
 import cors from "cors";
 import healthRoutes from "./routes/health.routes";
+import collectionsRoutes from "./routes/collections.routes";
+import docsRoutes from "./routes/docs.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 export const createApp = (): Application => {
@@ -12,6 +14,8 @@ export const createApp = (): Application => {
 
   // routes
   app.use("/health", healthRoutes);
+  app.use("/docs", docsRoutes);
+  app.use("/collections", collectionsRoutes);
 
   app.use(errorHandler);
 
