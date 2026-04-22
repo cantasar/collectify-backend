@@ -1,0 +1,16 @@
+import express, { Application } from "express";
+import cors from "cors";
+import healthRoutes from "./routes/health.routes";
+
+export const createApp = (): Application => {
+  const app = express();
+
+  // middlewares
+  app.use(cors({ origin: true }));
+  app.use(express.json({ limit: "1mb" }));
+
+  // routes
+  app.use("/health", healthRoutes);
+
+  return app;
+};
