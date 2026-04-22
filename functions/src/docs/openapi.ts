@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { createCollectionSchema, updateCollectionSchema } from "../schemas/collection.schema";
+import { createItemSchema, updateItemSchema } from "../schemas/item.schema";
 
 const jsonBody = (schemaName: string) => ({
   content: {
@@ -19,6 +20,20 @@ const collectionExample = {
   userId: "user_xyz",
   name: "Reading list",
   description: "Articles to read later",
+  createdAt: "2026-01-15T12:00:00.000Z",
+  updatedAt: "2026-01-15T12:00:00.000Z",
+};
+
+const itemExample = {
+  id: "item789",
+  collectionId: "abc123",
+  userId: "user_xyz",
+  title: "How to build a REST API",
+  content: "Notes on clean API design",
+  url: "https://example.com/article",
+  imageUrl: "https://example.com/cover.jpg",
+  tags: ["api", "backend"],
+  priority: "medium",
   createdAt: "2026-01-15T12:00:00.000Z",
   updatedAt: "2026-01-15T12:00:00.000Z",
 };
@@ -82,6 +97,53 @@ export const openApiDocument = {
         },
       },
     },
+    "/collections/{collectionId}/items": {
+      parameters: [
+        { name: "collectionId", in: "path", required: true, schema: { type: "string" } },
+      ],
+      get: {
+        summary: "List items in a collection",
+        responses: {
+          "200": { description: "OK", ...jsonBody("ItemList") },
+          "401": errorResponse("Missing or invalid token"),
+          "404": errorResponse("Collection not found"),
+        },
+      },
+      post: {
+        summary: "Add an item to a collection",
+        requestBody: { required: true, ...jsonBody("CreateItem") },
+        responses: {
+          "201": { description: "Created", ...jsonBody("Item") },
+          "400": errorResponse("Validation failed"),
+          "401": errorResponse("Missing or invalid token"),
+          "404": errorResponse("Collection not found"),
+        },
+      },
+    },
+    "/collections/{collectionId}/items/{itemId}": {
+      parameters: [
+        { name: "collectionId", in: "path", required: true, schema: { type: "string" } },
+        { name: "itemId", in: "path", required: true, schema: { type: "string" } },
+      ],
+      put: {
+        summary: "Update an item",
+        requestBody: { required: true, ...jsonBody("UpdateItem") },
+        responses: {
+          "200": { description: "OK", ...jsonBody("Item") },
+          "400": errorResponse("Validation failed"),
+          "401": errorResponse("Missing or invalid token"),
+          "404": errorResponse("Item not found"),
+        },
+      },
+      delete: {
+        summary: "Delete an item",
+        responses: {
+          "204": { description: "Deleted" },
+          "401": errorResponse("Missing or invalid token"),
+          "404": errorResponse("Item not found"),
+        },
+      },
+    },
   },
   components: {
     securitySchemes: {
@@ -97,7 +159,14 @@ export const openApiDocument = {
       },
       CollectionWithItems: {
         type: "object",
-        example: { ...collectionExample, items: [] },
+        example: { ...collectionExample, items: [itemExample] },
+      },
+      CreateItem: z.toJSONSchema(createItemSchema),
+      UpdateItem: z.toJSONSchema(updateItemSchema),
+      Item: { type: "object", example: itemExample },
+      ItemList: {
+        type: "object",
+        example: { items: [itemExample] },
       },
       Error: {
         type: "object",

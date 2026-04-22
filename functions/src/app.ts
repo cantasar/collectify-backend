@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import healthRoutes from "./routes/health.routes";
 import collectionsRoutes from "./routes/collections.routes";
+import itemsRoutes from "./routes/items.routes";
 import docsRoutes from "./routes/docs.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
@@ -16,6 +17,7 @@ export const createApp = (): Application => {
   app.use("/health", healthRoutes);
   app.use("/docs", docsRoutes);
   app.use("/collections", collectionsRoutes);
+  app.use("/collections/:collectionId/items", itemsRoutes);
 
   app.use(errorHandler);
 

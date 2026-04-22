@@ -35,7 +35,7 @@ export const createCollection = async (
   });
 };
 
-const ensureOwnedCollection = async (userId: string, id: string): Promise<Collection> => {
+export const ensureOwnedCollection = async (userId: string, id: string): Promise<Collection> => {
   const collection = await repo.findById(id);
   if (!collection || collection.userId !== userId) {
     throw new NotFoundError("Collection not found");
