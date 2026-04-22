@@ -27,3 +27,18 @@ export class NotFoundError extends AppError {
     super(404, "NOT_FOUND", message);
   }
 }
+
+export class ConflictError extends AppError {
+  constructor(message = "Conflict") {
+    super(409, "CONFLICT", message);
+  }
+}
+
+export class ValidationError extends AppError {
+  public readonly details: Array<{ field: string; message: string }>;
+
+  constructor(message: string, details: Array<{ field: string; message: string }>) {
+    super(400, "VALIDATION_ERROR", message);
+    this.details = details;
+  }
+}
