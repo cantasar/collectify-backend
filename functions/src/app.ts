@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
 import healthRoutes from "./routes/health.routes";
+import { errorHandler } from "./middleware/errorHandler";
 
 export const createApp = (): Application => {
   const app = express();
@@ -11,6 +12,8 @@ export const createApp = (): Application => {
 
   // routes
   app.use("/health", healthRoutes);
+
+  app.use(errorHandler);
 
   return app;
 };
