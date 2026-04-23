@@ -1,10 +1,11 @@
 import { Request, Response, NextFunction } from "express";
-import { AppError } from "../utils/errors";
+import { AppError, ValidationError } from "../utils/errors";
 
 interface ErrorResponseBody {
   error: {
     code: string;
     message: string;
+    details?: Array<{ field: string; message: string }>;
   };
 }
 
@@ -15,6 +16,19 @@ export const errorHandler = (
   _next: NextFunction,
 ): void => {
   void _next;
+
+  if (err instanceof ValidationError) {
+    const body: ErrorResponseBody = {
+      error: {
+        code: err.code,
+        message: err.message,
+        details: err.details,
+      },
+    };
+
+    res.status(err.statusCode).json(body);
+    return;
+  }
 
   if (err instanceof AppError) {
     const body: ErrorResponseBody = {
