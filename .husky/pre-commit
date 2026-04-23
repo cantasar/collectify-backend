@@ -1,7 +1,5 @@
 cd functions
 
-# Run prettier + eslint on staged files only
 npx lint-staged || exit 1
 
-# Type-check the whole project (TypeScript files are interdependent)
 npm run type-check || exit 1
