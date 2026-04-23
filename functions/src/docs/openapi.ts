@@ -45,13 +45,24 @@ export const openApiDocument = {
     version: "1.0.0",
     description: "Authenticate with `Authorization: Bearer <Firebase ID token>`.",
   },
-  servers: [{ url: "/" }],
+  servers: [{ url: ".." }],
   security: [{ bearerAuth: [] }],
   tags: [
+    { name: "Health", description: "Service health check" },
     { name: "Collections", description: "Collection CRUD operations" },
     { name: "Items", description: "Item CRUD operations within a collection" },
   ],
   paths: {
+    "/health": {
+      get: {
+        tags: ["Health"],
+        summary: "Service health check",
+        security: [],
+        responses: {
+          "200": { description: "OK", ...jsonBody("Health") },
+        },
+      },
+    },
     "/collections": {
       get: {
         tags: ["Collections"],
@@ -180,6 +191,13 @@ export const openApiDocument = {
       ItemList: {
         type: "object",
         example: { items: [itemExample] },
+      },
+      Health: {
+        type: "object",
+        example: {
+          status: "ok",
+          serviceId: "ppc-collectify-svc-...",
+        },
       },
       Error: {
         type: "object",
