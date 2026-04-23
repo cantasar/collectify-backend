@@ -6,6 +6,6 @@ import { createApp } from "./app";
 
 const SERVICE_ID = defineSecret("SERVICE_ID");
 
-setGlobalOptions({ maxInstances: 10, region: "europe-west1" });
+setGlobalOptions({ maxInstances: 10 });
 
 export const api = onRequest({ secrets: [SERVICE_ID] }, createApp());
