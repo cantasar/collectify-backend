@@ -129,6 +129,15 @@ export const update = async (id: string, input: UpdateCollectionInput): Promise<
   return toCollection(snap.id, snap.data()!);
 };
 
-export const remove = async (id: string): Promise<void> => {
-  await firestore.collection(COLLECTIONS).doc(id).delete();
+export const removeWithItems = async (id: string, userId: string): Promise<void> => {
+  const itemsSnap = await firestore
+    .collection("items")
+    .where("userId", "==", userId)
+    .where("collectionId", "==", id)
+    .get();
+
+  const batch = firestore.batch();
+  itemsSnap.docs.forEach((doc) => batch.delete(doc.ref));
+  batch.delete(firestore.collection(COLLECTIONS).doc(id));
+  await batch.commit();
 };

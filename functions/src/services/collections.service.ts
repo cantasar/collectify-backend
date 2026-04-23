@@ -60,6 +60,5 @@ export const updateCollection = async (
 
 export const deleteCollection = async (userId: string, id: string): Promise<void> => {
   await ensureOwnedCollection(userId, id);
-  await itemsRepo.deleteByCollection(id, userId);
-  await repo.remove(id);
+  await repo.removeWithItems(id, userId);
 };
