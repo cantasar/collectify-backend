@@ -47,9 +47,14 @@ export const openApiDocument = {
   },
   servers: [{ url: "/" }],
   security: [{ bearerAuth: [] }],
+  tags: [
+    { name: "Collections", description: "Collection CRUD operations" },
+    { name: "Items", description: "Item CRUD operations within a collection" },
+  ],
   paths: {
     "/collections": {
       get: {
+        tags: ["Collections"],
         summary: "List the authenticated user's collections",
         responses: {
           "200": { description: "OK", ...jsonBody("CollectionList") },
@@ -57,6 +62,7 @@ export const openApiDocument = {
         },
       },
       post: {
+        tags: ["Collections"],
         summary: "Create a collection",
         requestBody: { required: true, ...jsonBody("CreateCollection") },
         responses: {
@@ -70,6 +76,7 @@ export const openApiDocument = {
     "/collections/{id}": {
       parameters: [{ name: "id", in: "path", required: true, schema: { type: "string" } }],
       get: {
+        tags: ["Collections"],
         summary: "Get a collection with its items",
         responses: {
           "200": { description: "OK", ...jsonBody("CollectionWithItems") },
@@ -78,6 +85,7 @@ export const openApiDocument = {
         },
       },
       put: {
+        tags: ["Collections"],
         summary: "Update a collection",
         requestBody: { required: true, ...jsonBody("UpdateCollection") },
         responses: {
@@ -89,6 +97,7 @@ export const openApiDocument = {
         },
       },
       delete: {
+        tags: ["Collections"],
         summary: "Delete a collection and all its items",
         responses: {
           "204": { description: "Deleted" },
@@ -102,6 +111,7 @@ export const openApiDocument = {
         { name: "collectionId", in: "path", required: true, schema: { type: "string" } },
       ],
       get: {
+        tags: ["Items"],
         summary: "List items in a collection",
         responses: {
           "200": { description: "OK", ...jsonBody("ItemList") },
@@ -110,6 +120,7 @@ export const openApiDocument = {
         },
       },
       post: {
+        tags: ["Items"],
         summary: "Add an item to a collection",
         requestBody: { required: true, ...jsonBody("CreateItem") },
         responses: {
@@ -126,6 +137,7 @@ export const openApiDocument = {
         { name: "itemId", in: "path", required: true, schema: { type: "string" } },
       ],
       put: {
+        tags: ["Items"],
         summary: "Update an item",
         requestBody: { required: true, ...jsonBody("UpdateItem") },
         responses: {
@@ -136,6 +148,7 @@ export const openApiDocument = {
         },
       },
       delete: {
+        tags: ["Items"],
         summary: "Delete an item",
         responses: {
           "204": { description: "Deleted" },
