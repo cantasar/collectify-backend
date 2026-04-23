@@ -2,11 +2,21 @@ import { NotFoundError } from "../utils/errors";
 import * as repo from "../repositories/items.repository";
 import { ensureOwnedCollection } from "./collections.service";
 import { Item } from "../types/item";
+import { PaginatedResult } from "../types/common";
 import { CreateItemBody, UpdateItemBody } from "../schemas/item.schema";
 
-export const listItems = async (userId: string, collectionId: string): Promise<Item[]> => {
+export const listItems = async (
+  userId: string,
+  collectionId: string,
+  page: number,
+  limit: number,
+): Promise<PaginatedResult<Item>> => {
   await ensureOwnedCollection(userId, collectionId);
-  return repo.findByCollection(collectionId, userId);
+  const { docs, totalCount } = await repo.findByCollection(collectionId, userId, page, limit);
+  return {
+    data: docs,
+    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+  };
 };
 
 export const createItem = async (

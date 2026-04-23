@@ -3,12 +3,20 @@ import * as repo from "../repositories/collections.repository";
 import * as itemsRepo from "../repositories/items.repository";
 import { Collection } from "../types/collection";
 import { Item } from "../types/item";
+import { PaginatedResult } from "../types/common";
 import { CreateCollectionBody, UpdateCollectionBody } from "../schemas/collection.schema";
+import { MAX_COLLECTIONS_PER_USER } from "../config/constants";
 
-const MAX_COLLECTIONS_PER_USER = 20;
-
-export const listCollections = async (userId: string): Promise<Collection[]> => {
-  return repo.findByUser(userId);
+export const listCollections = async (
+  userId: string,
+  page: number,
+  limit: number,
+): Promise<PaginatedResult<Collection>> => {
+  const { docs, totalCount } = await repo.findByUser(userId, page, limit);
+  return {
+    data: docs,
+    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+  };
 };
 
 export const createCollection = async (
@@ -32,10 +40,18 @@ export const ensureOwnedCollection = async (userId: string, id: string): Promise
 export const getCollectionWithItems = async (
   userId: string,
   id: string,
-): Promise<Collection & { items: Item[] }> => {
+  page: number,
+  limit: number,
+): Promise<Collection & { items: PaginatedResult<Item> }> => {
   const collection = await ensureOwnedCollection(userId, id);
-  const items = await itemsRepo.findByCollection(id, userId);
-  return { ...collection, items };
+  const { docs, totalCount } = await itemsRepo.findByCollection(id, userId, page, limit);
+  return {
+    ...collection,
+    items: {
+      data: docs,
+      meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+    },
+  };
 };
 
 export const updateCollection = async (

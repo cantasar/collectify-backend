@@ -2,8 +2,15 @@ import { Request, Response } from "express";
 import * as service from "../services/items.service";
 
 export const listItems = async (req: Request, res: Response): Promise<void> => {
-  const items = await service.listItems(req.user!.uid, req.params.collectionId as string);
-  res.status(200).json({ items });
+  const page = Number(req.query.page);
+  const limit = Number(req.query.limit);
+  const result = await service.listItems(
+    req.user!.uid,
+    req.params.collectionId as string,
+    page,
+    limit,
+  );
+  res.status(200).json({ items: result.data, meta: result.meta });
 };
 
 export const createItem = async (req: Request, res: Response): Promise<void> => {

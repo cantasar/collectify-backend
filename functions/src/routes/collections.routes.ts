@@ -1,12 +1,13 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
 import { asyncHandler } from "../utils/asyncHandler";
-import { validateBody, validateParams } from "../middleware/validate";
+import { validateBody, validateParams, validateQuery } from "../middleware/validate";
 import {
   createCollectionSchema,
   updateCollectionSchema,
   collectionIdParamSchema,
 } from "../schemas/collection.schema";
+import { paginationQuerySchema } from "../schemas/pagination.schema";
 import {
   listCollections,
   createCollection,
@@ -19,10 +20,15 @@ const router = Router();
 
 router.use(requireAuth);
 
-router.get("/", asyncHandler(listCollections));
+router.get("/", validateQuery(paginationQuerySchema), asyncHandler(listCollections));
 router.post("/", validateBody(createCollectionSchema), asyncHandler(createCollection));
 
-router.get("/:id", validateParams(collectionIdParamSchema), asyncHandler(getCollection));
+router.get(
+  "/:id",
+  validateParams(collectionIdParamSchema),
+  validateQuery(paginationQuerySchema),
+  asyncHandler(getCollection),
+);
 router.put(
   "/:id",
   validateParams(collectionIdParamSchema),

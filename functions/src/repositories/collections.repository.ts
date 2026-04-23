@@ -1,9 +1,10 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { firestore } from "../config/firebase";
-import { Collection } from "../types/collection";
+import { Collection, CreateCollectionInput, UpdateCollectionInput } from "../types/collection";
 import { ConflictError } from "../utils/errors";
+import { FIRESTORE_COLLECTIONS } from "../config/constants";
 
-const COLLECTIONS = "collections";
+const { COLLECTIONS, ITEMS } = FIRESTORE_COLLECTIONS;
 
 const toCollection = (id: string, data: FirebaseFirestore.DocumentData): Collection => ({
   id,
@@ -14,14 +15,26 @@ const toCollection = (id: string, data: FirebaseFirestore.DocumentData): Collect
   updatedAt: (data.updatedAt as Timestamp).toDate().toISOString(),
 });
 
-export const findByUser = async (userId: string): Promise<Collection[]> => {
-  const snapshot = await firestore
-    .collection(COLLECTIONS)
-    .where("userId", "==", userId)
+export const findByUser = async (
+  userId: string,
+  page: number,
+  limit: number,
+): Promise<{ docs: Collection[]; totalCount: number }> => {
+  const baseQuery = firestore.collection(COLLECTIONS).where("userId", "==", userId);
+
+  const countSnap = await baseQuery.count().get();
+  const totalCount = countSnap.data().count;
+
+  const snapshot = await baseQuery
     .orderBy("createdAt", "desc")
+    .offset((page - 1) * limit)
+    .limit(limit)
     .get();
 
-  return snapshot.docs.map((doc) => toCollection(doc.id, doc.data()));
+  return {
+    docs: snapshot.docs.map((doc) => toCollection(doc.id, doc.data())),
+    totalCount,
+  };
 };
 
 export const findById = async (id: string): Promise<Collection | null> => {
@@ -30,15 +43,6 @@ export const findById = async (id: string): Promise<Collection | null> => {
     return null;
   }
   return toCollection(doc.id, doc.data()!);
-};
-
-export const countByUser = async (userId: string): Promise<number> => {
-  const snapshot = await firestore
-    .collection(COLLECTIONS)
-    .where("userId", "==", userId)
-    .count()
-    .get();
-  return snapshot.data().count;
 };
 
 export const findByUserAndName = async (
@@ -59,12 +63,6 @@ export const findByUserAndName = async (
   const doc = snapshot.docs[0];
   return toCollection(doc.id, doc.data());
 };
-
-export interface CreateCollectionInput {
-  userId: string;
-  name: string;
-  description: string;
-}
 
 export const createWithLimitCheck = async (
   input: CreateCollectionInput,
@@ -109,21 +107,13 @@ export const createWithLimitCheck = async (
   return toCollection(snap.id, snap.data()!);
 };
 
-export interface UpdateCollectionInput {
-  name?: string;
-  description?: string;
-}
-
 export const update = async (id: string, input: UpdateCollectionInput): Promise<Collection> => {
   const ref = firestore.collection(COLLECTIONS).doc(id);
 
-  const patch: Record<string, unknown> = {
+  await ref.update({
+    ...input,
     updatedAt: FieldValue.serverTimestamp(),
-  };
-  if (input.name !== undefined) patch.name = input.name;
-  if (input.description !== undefined) patch.description = input.description;
-
-  await ref.update(patch);
+  });
 
   const snap = await ref.get();
   return toCollection(snap.id, snap.data()!);
@@ -131,7 +121,7 @@ export const update = async (id: string, input: UpdateCollectionInput): Promise<
 
 export const removeWithItems = async (id: string, userId: string): Promise<void> => {
   const itemsSnap = await firestore
-    .collection("items")
+    .collection(ITEMS)
     .where("userId", "==", userId)
     .where("collectionId", "==", id)
     .get();

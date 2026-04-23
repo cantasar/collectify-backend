@@ -1,8 +1,9 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { firestore } from "../config/firebase";
-import { Item, ItemPriority } from "../types/item";
+import { Item, CreateItemInput, UpdateItemInput } from "../types/item";
+import { FIRESTORE_COLLECTIONS } from "../config/constants";
 
-const ITEMS = "items";
+const { ITEMS } = FIRESTORE_COLLECTIONS;
 
 const toItem = (id: string, data: FirebaseFirestore.DocumentData): Item => ({
   id,
@@ -18,15 +19,30 @@ const toItem = (id: string, data: FirebaseFirestore.DocumentData): Item => ({
   updatedAt: (data.updatedAt as Timestamp).toDate().toISOString(),
 });
 
-export const findByCollection = async (collectionId: string, userId: string): Promise<Item[]> => {
-  const snapshot = await firestore
+export const findByCollection = async (
+  collectionId: string,
+  userId: string,
+  page: number,
+  limit: number,
+): Promise<{ docs: Item[]; totalCount: number }> => {
+  const baseQuery = firestore
     .collection(ITEMS)
     .where("userId", "==", userId)
-    .where("collectionId", "==", collectionId)
+    .where("collectionId", "==", collectionId);
+
+  const countSnap = await baseQuery.count().get();
+  const totalCount = countSnap.data().count;
+
+  const snapshot = await baseQuery
     .orderBy("createdAt", "desc")
+    .offset((page - 1) * limit)
+    .limit(limit)
     .get();
 
-  return snapshot.docs.map((doc) => toItem(doc.id, doc.data()));
+  return {
+    docs: snapshot.docs.map((doc) => toItem(doc.id, doc.data())),
+    totalCount,
+  };
 };
 
 export const findById = async (id: string): Promise<Item | null> => {
@@ -37,63 +53,27 @@ export const findById = async (id: string): Promise<Item | null> => {
   return toItem(doc.id, doc.data()!);
 };
 
-export interface CreateItemInput {
-  collectionId: string;
-  userId: string;
-  title: string;
-  content: string;
-  url?: string;
-  imageUrl?: string;
-  tags: string[];
-  priority: ItemPriority;
-}
-
 export const create = async (input: CreateItemInput): Promise<Item> => {
   const ref = firestore.collection(ITEMS).doc();
   const now = FieldValue.serverTimestamp();
 
-  const payload: Record<string, unknown> = {
-    collectionId: input.collectionId,
-    userId: input.userId,
-    title: input.title,
-    content: input.content,
-    tags: input.tags,
-    priority: input.priority,
+  await ref.set({
+    ...input,
     createdAt: now,
     updatedAt: now,
-  };
-  if (input.url !== undefined) payload.url = input.url;
-  if (input.imageUrl !== undefined) payload.imageUrl = input.imageUrl;
-
-  await ref.set(payload);
+  });
 
   const snap = await ref.get();
   return toItem(snap.id, snap.data()!);
 };
 
-export interface UpdateItemInput {
-  title?: string;
-  content?: string;
-  url?: string;
-  imageUrl?: string;
-  tags?: string[];
-  priority?: ItemPriority;
-}
-
 export const update = async (id: string, input: UpdateItemInput): Promise<Item> => {
   const ref = firestore.collection(ITEMS).doc(id);
 
-  const patch: Record<string, unknown> = {
+  await ref.update({
+    ...input,
     updatedAt: FieldValue.serverTimestamp(),
-  };
-  if (input.title !== undefined) patch.title = input.title;
-  if (input.content !== undefined) patch.content = input.content;
-  if (input.url !== undefined) patch.url = input.url;
-  if (input.imageUrl !== undefined) patch.imageUrl = input.imageUrl;
-  if (input.tags !== undefined) patch.tags = input.tags;
-  if (input.priority !== undefined) patch.priority = input.priority;
-
-  await ref.update(patch);
+  });
 
   const snap = await ref.get();
   return toItem(snap.id, snap.data()!);
@@ -101,20 +81,4 @@ export const update = async (id: string, input: UpdateItemInput): Promise<Item> 
 
 export const remove = async (id: string): Promise<void> => {
   await firestore.collection(ITEMS).doc(id).delete();
-};
-
-export const deleteByCollection = async (collectionId: string, userId: string): Promise<void> => {
-  const snapshot = await firestore
-    .collection(ITEMS)
-    .where("userId", "==", userId)
-    .where("collectionId", "==", collectionId)
-    .get();
-
-  if (snapshot.empty) {
-    return;
-  }
-
-  const batch = firestore.batch();
-  snapshot.docs.forEach((doc) => batch.delete(doc.ref));
-  await batch.commit();
 };
