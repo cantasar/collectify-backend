@@ -1,4 +1,4 @@
-import { ConflictError, NotFoundError } from "../utils/errors";
+import { NotFoundError, ConflictError } from "../utils/errors";
 import * as repo from "../repositories/collections.repository";
 import * as itemsRepo from "../repositories/items.repository";
 import { Collection } from "../types/collection";
@@ -15,24 +15,10 @@ export const createCollection = async (
   userId: string,
   body: CreateCollectionBody,
 ): Promise<Collection> => {
-  const count = await repo.countByUser(userId);
-  if (count >= MAX_COLLECTIONS_PER_USER) {
-    throw new ConflictError(
-      `Collection limit of ${MAX_COLLECTIONS_PER_USER} reached`,
-      "COLLECTION_LIMIT_REACHED",
-    );
-  }
-
-  const duplicate = await repo.findByUserAndName(userId, body.name);
-  if (duplicate) {
-    throw new ConflictError("A collection with this name already exists", "COLLECTION_NAME_TAKEN");
-  }
-
-  return repo.create({
-    userId,
-    name: body.name,
-    description: body.description ?? "",
-  });
+  return repo.createWithLimitCheck(
+    { userId, name: body.name, description: body.description ?? "" },
+    MAX_COLLECTIONS_PER_USER,
+  );
 };
 
 export const ensureOwnedCollection = async (userId: string, id: string): Promise<Collection> => {

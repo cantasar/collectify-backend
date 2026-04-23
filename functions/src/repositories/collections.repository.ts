@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { firestore } from "../config/firebase";
 import { Collection } from "../types/collection";
+import { ConflictError } from "../utils/errors";
 
 const COLLECTIONS = "collections";
 
@@ -65,19 +66,46 @@ export interface CreateCollectionInput {
   description: string;
 }
 
-export const create = async (input: CreateCollectionInput): Promise<Collection> => {
-  const ref = firestore.collection(COLLECTIONS).doc();
-  const now = FieldValue.serverTimestamp();
+export const createWithLimitCheck = async (
+  input: CreateCollectionInput,
+  maxCollections: number,
+): Promise<Collection> => {
+  const newRef = firestore.collection(COLLECTIONS).doc();
 
-  await ref.set({
-    userId: input.userId,
-    name: input.name,
-    description: input.description,
-    createdAt: now,
-    updatedAt: now,
+  await firestore.runTransaction(async (tx) => {
+    const countQuery = firestore.collection(COLLECTIONS).where("userId", "==", input.userId);
+    const countSnap = await tx.get(countQuery);
+
+    if (countSnap.size >= maxCollections) {
+      throw new ConflictError(
+        `Collection limit of ${maxCollections} reached`,
+        "COLLECTION_LIMIT_REACHED",
+      );
+    }
+
+    const nameQuery = firestore
+      .collection(COLLECTIONS)
+      .where("userId", "==", input.userId)
+      .where("name", "==", input.name);
+    const nameSnap = await tx.get(nameQuery);
+
+    if (!nameSnap.empty) {
+      throw new ConflictError(
+        "A collection with this name already exists",
+        "COLLECTION_NAME_TAKEN",
+      );
+    }
+
+    tx.set(newRef, {
+      userId: input.userId,
+      name: input.name,
+      description: input.description,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   });
 
-  const snap = await ref.get();
+  const snap = await newRef.get();
   return toCollection(snap.id, snap.data()!);
 };
 
