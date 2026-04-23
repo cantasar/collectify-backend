@@ -1,7 +1,7 @@
-import { Request, Response } from "express";
+import { RequestHandler } from "express";
 import * as service from "../services/items.service";
 
-export const listItems = async (req: Request, res: Response): Promise<void> => {
+export const listItems: RequestHandler = async (req, res) => {
   const page = Number(req.query.page);
   const limit = Number(req.query.limit);
   const result = await service.listItems(
@@ -13,12 +13,12 @@ export const listItems = async (req: Request, res: Response): Promise<void> => {
   res.status(200).json({ items: result.data, meta: result.meta });
 };
 
-export const createItem = async (req: Request, res: Response): Promise<void> => {
+export const createItem: RequestHandler = async (req, res) => {
   const item = await service.createItem(req.user!.uid, req.params.collectionId as string, req.body);
   res.status(201).json(item);
 };
 
-export const updateItem = async (req: Request, res: Response): Promise<void> => {
+export const updateItem: RequestHandler = async (req, res) => {
   const item = await service.updateItem(
     req.user!.uid,
     req.params.collectionId as string,
@@ -28,7 +28,7 @@ export const updateItem = async (req: Request, res: Response): Promise<void> => 
   res.status(200).json(item);
 };
 
-export const deleteItem = async (req: Request, res: Response): Promise<void> => {
+export const deleteItem: RequestHandler = async (req, res) => {
   await service.deleteItem(
     req.user!.uid,
     req.params.collectionId as string,
