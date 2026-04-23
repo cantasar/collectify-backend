@@ -1,6 +1,5 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth";
-import { asyncHandler } from "../utils/asyncHandler";
 import { validateBody, validateParams, validateQuery } from "../middleware/validate";
 import {
   createItemSchema,
@@ -19,21 +18,21 @@ router.get(
   "/",
   validateParams(itemCollectionParamSchema),
   validateQuery(paginationQuerySchema),
-  asyncHandler(listItems),
+  listItems,
 );
 router.post(
   "/",
   validateParams(itemCollectionParamSchema),
   validateBody(createItemSchema),
-  asyncHandler(createItem),
+  createItem,
 );
 
 router.put(
   "/:itemId",
   validateParams(itemParamsSchema),
   validateBody(updateItemSchema),
-  asyncHandler(updateItem),
+  updateItem,
 );
-router.delete("/:itemId", validateParams(itemParamsSchema), asyncHandler(deleteItem));
+router.delete("/:itemId", validateParams(itemParamsSchema), deleteItem);
 
 export default router;
