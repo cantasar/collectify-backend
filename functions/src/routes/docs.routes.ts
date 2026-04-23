@@ -8,6 +8,14 @@ router.get("/openapi.json", (_req, res) => {
   res.json(openApiDocument);
 });
 
+router.get("/", (req, res, next) => {
+  if (!req.originalUrl.endsWith("/")) {
+    const lastSegment = req.originalUrl.split("/").pop();
+    return res.redirect(301, lastSegment + "/");
+  }
+  next();
+});
+
 router.use(
   "/",
   swaggerUi.serve,
