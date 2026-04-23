@@ -22,8 +22,8 @@ const toItem = (id: string, data: FirebaseFirestore.DocumentData): Item => ({
 export const findByCollection = async (
   collectionId: string,
   userId: string,
-  page: number,
-  limit: number,
+  page?: number,
+  limit?: number,
 ): Promise<{ docs: Item[]; totalCount: number }> => {
   const baseQuery = firestore
     .collection(ITEMS)
@@ -33,11 +33,13 @@ export const findByCollection = async (
   const countSnap = await baseQuery.count().get();
   const totalCount = countSnap.data().count;
 
-  const snapshot = await baseQuery
-    .orderBy("createdAt", "desc")
-    .offset((page - 1) * limit)
-    .limit(limit)
-    .get();
+  let query = baseQuery.orderBy("createdAt", "desc");
+
+  if (page !== undefined && limit !== undefined) {
+    query = query.offset((page - 1) * limit).limit(limit);
+  }
+
+  const snapshot = await query.get();
 
   return {
     docs: snapshot.docs.map((doc) => toItem(doc.id, doc.data())),

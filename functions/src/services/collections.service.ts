@@ -9,13 +9,18 @@ import { MAX_COLLECTIONS_PER_USER } from "../config/constants";
 
 export const listCollections = async (
   userId: string,
-  page: number,
-  limit: number,
+  page?: number,
+  limit?: number,
 ): Promise<PaginatedResult<Collection>> => {
   const { docs, totalCount } = await repo.findByUser(userId, page, limit);
   return {
     data: docs,
-    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+    meta: {
+      page: page ?? 1,
+      limit: limit ?? totalCount,
+      totalCount,
+      totalPages: limit ? Math.ceil(totalCount / limit) : 1,
+    },
   };
 };
 
@@ -40,8 +45,8 @@ export const ensureOwnedCollection = async (userId: string, id: string): Promise
 export const getCollectionWithItems = async (
   userId: string,
   id: string,
-  page: number,
-  limit: number,
+  page?: number,
+  limit?: number,
 ): Promise<Collection & { items: PaginatedResult<Item> }> => {
   const collection = await ensureOwnedCollection(userId, id);
   const { docs, totalCount } = await itemsRepo.findByCollection(id, userId, page, limit);
@@ -49,7 +54,12 @@ export const getCollectionWithItems = async (
     ...collection,
     items: {
       data: docs,
-      meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+      meta: {
+        page: page ?? 1,
+        limit: limit ?? totalCount,
+        totalCount,
+        totalPages: limit ? Math.ceil(totalCount / limit) : 1,
+      },
     },
   };
 };

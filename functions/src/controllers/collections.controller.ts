@@ -2,8 +2,7 @@ import { RequestHandler } from "express";
 import * as service from "../services/collections.service";
 
 export const listCollections: RequestHandler = async (req, res) => {
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const { page, limit } = req.query as { page?: number; limit?: number };
   const result = await service.listCollections(req.user!.uid, page, limit);
   res.status(200).json({ collections: result.data, meta: result.meta });
 };
@@ -14,8 +13,7 @@ export const createCollection: RequestHandler = async (req, res) => {
 };
 
 export const getCollection: RequestHandler = async (req, res) => {
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const { page, limit } = req.query as { page?: number; limit?: number };
   const result = await service.getCollectionWithItems(
     req.user!.uid,
     req.params.id as string,

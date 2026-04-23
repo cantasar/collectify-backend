@@ -17,19 +17,21 @@ const toCollection = (id: string, data: FirebaseFirestore.DocumentData): Collect
 
 export const findByUser = async (
   userId: string,
-  page: number,
-  limit: number,
+  page?: number,
+  limit?: number,
 ): Promise<{ docs: Collection[]; totalCount: number }> => {
   const baseQuery = firestore.collection(COLLECTIONS).where("userId", "==", userId);
 
   const countSnap = await baseQuery.count().get();
   const totalCount = countSnap.data().count;
 
-  const snapshot = await baseQuery
-    .orderBy("createdAt", "desc")
-    .offset((page - 1) * limit)
-    .limit(limit)
-    .get();
+  let query = baseQuery.orderBy("createdAt", "desc");
+
+  if (page !== undefined && limit !== undefined) {
+    query = query.offset((page - 1) * limit).limit(limit);
+  }
+
+  const snapshot = await query.get();
 
   return {
     docs: snapshot.docs.map((doc) => toCollection(doc.id, doc.data())),

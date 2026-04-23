@@ -15,6 +15,23 @@ const errorResponse = (description: string) => ({
   ...jsonBody("Error"),
 });
 
+const paginationParameters = [
+  {
+    name: "page",
+    in: "query",
+    required: false,
+    description: "Page number, starting from 1. Omit to return all results.",
+    schema: { type: "integer", minimum: 1 },
+  },
+  {
+    name: "limit",
+    in: "query",
+    required: false,
+    description: "Maximum number of items per page. Omit to return all results.",
+    schema: { type: "integer", minimum: 1, maximum: 100 },
+  },
+];
+
 const collectionExample = {
   id: "abc123",
   userId: "user_xyz",
@@ -67,6 +84,7 @@ export const openApiDocument = {
       get: {
         tags: ["Collections"],
         summary: "List the authenticated user's collections",
+        parameters: paginationParameters,
         responses: {
           "200": { description: "OK", ...jsonBody("CollectionList") },
           "401": errorResponse("Missing or invalid token"),
@@ -89,6 +107,7 @@ export const openApiDocument = {
       get: {
         tags: ["Collections"],
         summary: "Get a collection with its items",
+        parameters: paginationParameters,
         responses: {
           "200": { description: "OK", ...jsonBody("CollectionWithItems") },
           "401": errorResponse("Missing or invalid token"),
@@ -124,6 +143,7 @@ export const openApiDocument = {
       get: {
         tags: ["Items"],
         summary: "List items in a collection",
+        parameters: paginationParameters,
         responses: {
           "200": { description: "OK", ...jsonBody("ItemList") },
           "401": errorResponse("Missing or invalid token"),
@@ -179,18 +199,30 @@ export const openApiDocument = {
       Collection: { type: "object", example: collectionExample },
       CollectionList: {
         type: "object",
-        example: { collections: [collectionExample] },
+        example: {
+          collections: [collectionExample],
+          meta: { page: 1, limit: 20, totalCount: 1, totalPages: 1 },
+        },
       },
       CollectionWithItems: {
         type: "object",
-        example: { ...collectionExample, items: [itemExample] },
+        example: {
+          ...collectionExample,
+          items: {
+            data: [itemExample],
+            meta: { page: 1, limit: 20, totalCount: 1, totalPages: 1 },
+          },
+        },
       },
       CreateItem: z.toJSONSchema(createItemSchema),
       UpdateItem: z.toJSONSchema(updateItemSchema),
       Item: { type: "object", example: itemExample },
       ItemList: {
         type: "object",
-        example: { items: [itemExample] },
+        example: {
+          items: [itemExample],
+          meta: { page: 1, limit: 20, totalCount: 1, totalPages: 1 },
+        },
       },
       Health: {
         type: "object",

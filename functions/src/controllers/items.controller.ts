@@ -2,8 +2,7 @@ import { RequestHandler } from "express";
 import * as service from "../services/items.service";
 
 export const listItems: RequestHandler = async (req, res) => {
-  const page = Number(req.query.page);
-  const limit = Number(req.query.limit);
+  const { page, limit } = req.query as { page?: number; limit?: number };
   const result = await service.listItems(
     req.user!.uid,
     req.params.collectionId as string,

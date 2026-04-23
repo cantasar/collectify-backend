@@ -8,14 +8,19 @@ import { CreateItemBody, UpdateItemBody } from "../schemas/item.schema";
 export const listItems = async (
   userId: string,
   collectionId: string,
-  page: number,
-  limit: number,
+  page?: number,
+  limit?: number,
 ): Promise<PaginatedResult<Item>> => {
   await ensureOwnedCollection(userId, collectionId);
   const { docs, totalCount } = await repo.findByCollection(collectionId, userId, page, limit);
   return {
     data: docs,
-    meta: { page, limit, totalCount, totalPages: Math.ceil(totalCount / limit) },
+    meta: {
+      page: page ?? 1,
+      limit: limit ?? totalCount,
+      totalCount,
+      totalPages: limit ? Math.ceil(totalCount / limit) : 1,
+    },
   };
 };
 
